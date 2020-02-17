@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 
 import argparse
-import csv
-import gzip
 import io
-import json
 import os
-import shutil
 import sys
+import json
+import csv
 import tempfile
 from datetime import datetime
+import itertools
+import pkg_resources
 
+from jsonschema import ValidationError, Draft4Validator, FormatChecker
 import singer
-from jsonschema import Draft4Validator, FormatChecker
 
 from target_s3_csv import s3
 from target_s3_csv import utils
 
-logger = singer.get_logger('target_s3_csv')
+logger = singer.get_logger()
 
 
 def emit_state(state):
@@ -68,7 +68,7 @@ def persist_messages(messages, config):
             else:
                 record_to_load = utils.remove_metadata_values_from_record(o)
 
-            filename = o['stream'] + '-' + now + '.csv'
+            filename = now + '-' + o['stream'] + '.csv'
             filename = os.path.expanduser(os.path.join(tempfile.gettempdir(), filename))
             if not filename in filenames:
                 filenames.append(filename)
@@ -117,33 +117,12 @@ def persist_messages(messages, config):
             logger.warning("Unknown message type {} in message {}"
                             .format(o['type'], o))
 
-    # Upload created CSV files to S3
+    # CSV files created uploading to S3
     for filename in filenames:
-        compressed_file = None
-        if config.get("compression") is None or config["compression"].lower() == "none":
-            pass  # no compression
-        else:
-            if config["compression"] == "gzip":
-                compressed_file = f"{filename}.gz"
-                with open(filename, 'rb') as f_in:
-                    with gzip.open(compressed_file, 'wb') as f_out:
-                        logger.info(f"Compressing file as '{compressed_file}'")
-                        shutil.copyfileobj(f_in, f_out)
-            else:
-                raise NotImplementedError(
-                    "Compression type '{}' is not supported. "
-                    "Expected: 'none' or 'gzip'"
-                    .format(config["compression"])
-                )
-        s3.upload_file(compressed_file or filename,
-                       config.get('s3_bucket'), config.get('s3_key_prefix', ''),
-                       encryption_type=config.get('encryption_type'),
-                       encryption_key=config.get('encryption_key'))
+        s3.upload_file(filename, config.get('s3_bucket'), config.get('s3_key_prefix'))
 
-        # Remove the local file(s)
+        # Remove the uploaded file
         os.remove(filename)
-        if compressed_file:
-            os.remove(compressed_file)
 
     return state
 
@@ -163,7 +142,7 @@ def main():
     config_errors = utils.validate_config(config)
     if len(config_errors) > 0:
         logger.error("Invalid configuration:\n   * {}".format('\n   * '.join(config_errors)))
-        sys.exit(1)
+        exit(1)
 
     s3.setup_aws_client(config)
 

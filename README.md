@@ -70,36 +70,22 @@ Full list of options in `config.json`:
 | delimiter                           | String  |            | (Default: ',') A one-character string used to separate fields. |
 | quotechar                           | String  |            | (Default: '"') A one-character string used to quote fields containing special characters, such as the delimiter or quotechar, or which contain new-line characters. |
 | add_metadata_columns                | Boolean |            | (Default: False) Metadata columns add extra row level information about data ingestions, (i.e. when was the row read in source, when was inserted or deleted in snowflake etc.) Metadata columns are creating automatically by adding extra columns to the tables with a column prefix `_SDC_`. The column names are following the stitch naming conventions documented at https://www.stitchdata.com/docs/data-structure/integration-schemas#sdc-columns. Enabling metadata columns will flag the deleted rows by setting the `_SDC_DELETED_AT` metadata column. Without the `add_metadata_columns` option the deleted rows from singer taps will not be recongisable in Snowflake. |
-| encryption_type                     | String  | No         | (Default: 'none') The type of encryption to use. Current supported options are: 'none' and 'KMS'. |
-| encryption_key                      | String  | No         | A reference to the encryption key to use for data encryption. For KMS encryption, this should be the name of the KMS encryption key ID (e.g. '1234abcd-1234-1234-1234-1234abcd1234'). This field is ignored if 'encryption_type' is none or blank. |
-| compression                         | String  | No         | The type of compression to apply before uploading. Supported options are `none` (default) and `gzip`. For gzipped files, the file extension will automatically be changed to `.csv.gz` for all files. |
+
 
 ### To run tests:
 
-1. Define environment variables that requires running the tests
-```
-  export TARGET_S3_CSV_ACCESS_KEY_ID=<s3-access-key-id>
-  export TARGET_S3_CSV_SECRET_ACCESS_KEY=<s3-secret-access-key>
-  export TARGET_S3_CSV_BUCKET=<s3-bucket>
-  export TARGET_S3_CSV_KEY_PREFIX=<s3-key-prefix>
-```
-
-2. Install python test dependencies in a virtual env and run nose unit and integration tests
+1. Install python dependencies in a virtual env and run nose unit and integration tests
 ```
   python3 -m venv venv
   . venv/bin/activate
   pip install --upgrade pip
-  pip install .[test]
+  pip install .
+  pip install nose
 ```
 
 3. To run unit tests:
 ```
   nosetests --where=tests/unit
-```
-
-4. To run integration tests:
-```
-  nosetests --where=tests/integration
 ```
 
 ### To run pylint:

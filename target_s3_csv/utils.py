@@ -10,7 +10,7 @@ import inflection
 from decimal import Decimal
 from datetime import datetime
 
-logger = singer.get_logger('target_s3_csv')
+logger = singer.get_logger()
 
 def validate_config(config):
     """Validates config"""
@@ -88,7 +88,6 @@ def remove_metadata_values_from_record(record_message):
     return cleaned_record
 
 
-# pylint: disable=unnecessary-comprehension
 def flatten_key(k, parent_key, sep):
     """
     """
